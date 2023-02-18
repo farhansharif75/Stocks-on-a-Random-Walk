@@ -1,0 +1,88 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import random
+import pylab
+from matplotlib import animation
+from matplotlib.animation import FuncAnimation
+import pandas as pd
+from scipy.stats import levy_stable
+import scipy.stats as stats
+from scipy.signal import find_peaks
+import math
+
+#%%
+
+#Simulate a 1D random walk
+
+def randomwalk1D(n):
+    x, y = 0, 0
+    # Generate the time points [1, 2, 3, ... , n]
+    timepoints = np.arange(n + 1)
+    positions = [y]
+    directions = ["UP", "DOWN"]
+    for i in range(1, n + 1):
+        # Randomly select either UP or DOWN
+        step = random.choice(directions)
+        
+        # Move the object up or down
+        if step == "UP":
+            y += 1
+        elif step == "DOWN":
+            y -= 1
+        # Keep track of the positions
+        positions.append(y)
+    return timepoints, positions
+
+#Visualise
+
+time_data, pos_data = randomwalk1D(1000)
+plt.plot(time_data, pos_data, 'r-')
+plt.title("1D Random Walk in Python")
+plt.grid()
+plt.ylabel('Toss score')
+plt.xlabel('Toss number')
+
+#%%
+
+#Simulate a 2D random walk
+
+n = 1000 #n is the number of steps(increase in the value of n increses the compelxity of graph) 
+x = np.zeros(n) # x and y are arrays which store the coordinates of the position 
+y = np.zeros(n) 
+direction=["NORTH","NE","NW","SOUTH","SE","SW","EAST","WEST"] # Assuming the four directions of movement.
+for i in range(1, n): 
+    step = random.choice(direction) #Randomly choosing the direction of movement. 
+    #plt.pause(0.05)
+    if step == "EAST": #updating the direction with respect to the direction of motion choosen.
+        x[i] = x[i - 1] + 1
+        y[i] = y[i - 1] 
+    elif step == "WEST": 
+        x[i] = x[i - 1] - 1
+        y[i] = y[i - 1] 
+    elif step == "NORTH": 
+        x[i] = x[i - 1] 
+        y[i] = y[i - 1] + 1
+    elif step == 'NE':
+        x[i] = x[i - 1] + 1/np.sqrt(2)
+        y[i] = y[i - 1] + 1/np.sqrt(2)
+    elif step == 'NW':
+        x[i] = x[i - 1] - 1/np.sqrt(2)
+        y[i] = y[i - 1] + 1/np.sqrt(2)
+    elif step == 'SE':
+        x[i] = x[i - 1] + 1/np.sqrt(2)
+        y[i] = y[i - 1] - 1/np.sqrt(2)
+    elif step == 'SE':
+        x[i] = x[i - 1] - 1/np.sqrt(2)
+        y[i] = y[i - 1] - 1/np.sqrt(2)
+    else: 
+        x[i] = x[i - 1] 
+        y[i] = y[i - 1] - 1
+        
+#Visualise
+
+pylab.title("Random Walk 2-D (8 directions)")
+pylab.plot(x, y) #plotting the walk.
+pylab.grid()
+pylab.xlabel('Pollen x-Position')
+pylab.ylabel('Pollen y-Position')
+pylab.show()
