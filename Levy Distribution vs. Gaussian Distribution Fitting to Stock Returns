@@ -1,0 +1,142 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import random
+import pylab
+from matplotlib import animation
+from matplotlib.animation import FuncAnimation
+import pandas as pd
+from scipy.stats import levy_stable
+import scipy.stats as stats
+from scipy.signal import find_peaks
+import math
+
+#%%
+
+#Data loaded in reverse chronological order
+#Need to reverse the order of extracted columns
+
+sp500_data5_rev = pd.read_csv('S&P500_last_5_years.csv') 
+sp500_data5 = sp500_data5_rev.iloc[::-1]
+
+#Differentiating the columns
+
+date5 = sp500_data5.loc[:,'Date']
+close5 = sp500_data5.loc[:, 'Close/Last']
+high5 = sp500_data5.loc[:, 'High']
+low5 = sp500_data5.loc[:, 'Low']
+
+#Visualisation of closing values over the last 5 years
+
+plt.plot(date5, close5, color = 'red')
+plt.title('S&P500 Index: Performance over the last 5 year')
+plt.ylabel('Value of index')
+plt.xlabel('Date')
+plt.xticks([0, 250, 500, 750, 1000, 1250 ]) #Ticks chosen so that the grid is not too cluttered and evenly spaced
+plt.grid()
+plt.show()
+
+#%%
+
+#Visualising the difference between the highest and lowest values
+#On a given day, over the 5 year period
+
+daily_change5 = high5-low5
+#print(daily_change)
+plt.plot(date5, daily_change5, color = 'blue')
+plt.title('S&P500 Index: Daily Change of Value over the last 5 years')
+plt.ylabel('Change in Value of index')
+plt.xlabel('Date')
+plt.xticks([0, 250, 500, 750, 1000, 1250]) #Ticks chosen as above
+plt.grid()
+plt.show()
+
+#%%
+
+#Visualising the percentage change on each day, w.r.t the closing value
+#over the 5 year period
+
+per_change5 = (daily_change5/close5)*100
+
+plt.hist(daily_change5, bins=100, color = 'blue')
+plt.xlabel('Close Values (Price)')
+plt.ylabel('Count')
+plt.grid()
+plt.title('Distribution of Daily Close Values (10 years)')
+plt.show()
+
+#%%
+
+#Daily return = the difference between successive closing values
+
+daily_return5 = close5.diff()
+print(daily_return5)
+
+#%%
+
+#Visualising the daily return
+
+plt.hist(daily_return5, bins = 100)
+plt.xlabel('Daily Returns')
+plt.yscale('log')
+plt.ylabel('No. of Instances')
+plt.title('Daily Returns on the S&P500 Index, over the last 5 years, semi-log')
+plt.grid()
+plt.show
+
+#%%
+
+#Fitting a Gaussian distribution to the daily returns distribution
+#The last element of daily_return5 dropped as it is NaN
+
+mean, var = stats.norm.fit(daily_return5.dropna())
+print(mean, var)
+
+#%%
+
+mean_fit = 1.1445186953062847
+var_fit = 45.059302048973876
+
+#%%
+
+#Fitting a Levy-stable to the daily returns distribution
+#Takes some time
+
+alpha1, beta1, loc1, scale1 = levy_stable.fit(daily_return5.dropna())
+print(alpha1, beta1, loc1, scale1)
+
+#%%
+
+alpha_fit = 1.5400780479346055 
+beta_fit = -0.1691872508883072 
+loc_fit = 0.6502095920438251 
+scale_fit = 22.632843550381708
+
+#%%
+
+#The outputs of the fitting step are the inputs of the plotting step
+#From Gaussian fit
+
+mu = 1.1445186953062847 #same as mean
+variance = 45.059302048973876 #var=variance
+sigma = math.sqrt(variance) #sigma = standard deviation
+x1 = np.linspace(mu - 3*sigma, mu + 3*sigma, 100)
+
+#From Levy-stable fit
+
+alpha, beta = 1.5400780479346055, -0.1691872508883072
+mean, var, skew, kurt = levy_stable.stats(alpha, beta, moments='mvsk') #Generates the Levy-stable distrbution with the required parameters
+x = np.linspace(levy_stable.ppf(0.01, alpha, beta),
+                levy_stable.ppf(0.99, alpha, beta), 100)
+
+plt.hist(daily_return5, bins = 100, density = True)
+plt.xlabel('Daily Returns')
+plt.yscale('log')
+plt.ylabel('No. of Instances')
+plt.xlim(-180,180)
+plt.title('Levy-Stable vs. Gaussian fit onto Data')
+plt.plot(x1*6, (1/6)*stats.norm.pdf(x1, mu, sigma), lw = 2, alpha = 0.6, label= "Gaussian fit") #Manual scaling applied
+plt.plot(x*20, (1/20)*levy_stable.pdf(x, alpha, beta), lw=3, alpha=1, label='Levy-stable fit') #Manual Scaling applied
+plt.legend()
+plt.grid()
+plt.show()
+#%%
