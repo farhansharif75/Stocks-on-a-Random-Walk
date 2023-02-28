@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.optimize import curve_fit
 
 #define dates and index score in ~ 100 dyas leading up to the crash
 
@@ -28,7 +29,7 @@ plt.grid()
 
 #%%
 
-#find the best fit paramateres, with constraints on the parameteres found in the literature
+#find the best fit parameters, with constraints on the parameters found in the literature
 
 popt, pcov = curve_fit(LPPL, crashdate5, crashclose5, bounds=([106,3000,-np.inf,-0.5,0.15,0,4.8],[107,3700,1000,-.05,0.6,2*np.pi,10]))
 print(popt)
