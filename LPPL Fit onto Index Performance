@@ -1,0 +1,59 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+#define dates and index score in ~ 100 dyas leading up to the crash
+
+crashclose5df = close5[405:510]
+crashclose5 = crashclose5df.to_numpy() #convert pandas series to numpy array
+crashdate5 = np.arange(0,105,1)
+print(crashclose5[0:])
+print(crashdate5)
+
+#%%
+
+#define the LPPL function to be fitted
+
+def LPPL(t,t_c,A,B,C,beta,phi,omega): 
+    return A + B*(t_c - t)**(beta)*(1 + C*np.cos(omega*np.log(t_c-t) + phi))
+
+#%%
+
+#visualise the stock performance in the ~100 days leading up to the crash
+
+plt.plot(crashdate5, crashclose5)
+plt.ylabel('Index Value')
+plt.xlabel('Time (days)')
+plt.title('Index Performance in ~ 100 days leading up to the crash')
+plt.grid()
+
+#%%
+
+#find the best fit paramateres, with constraints on the parameteres found in the literature
+
+popt, pcov = curve_fit(LPPL, crashdate5, crashclose5, bounds=([106,3000,-np.inf,-0.5,0.15,0,4.8],[107,3700,1000,-.05,0.6,2*np.pi,10]))
+print(popt)
+
+#assign the parameters found to new variables to be called inside the function when plotting
+
+fit_t_c = popt[0]
+fit_A = popt[1]
+fit_B = popt[2]
+fit_C = popt[3]
+fit_beta = popt[4]
+fit_phi = popt[5]
+fit_omega = popt[6]
+
+#I feel these parameters could be better optimised for, but a decent fit is obtained at the end
+
+#%%
+
+#overlay the LPPL fit on to the Index Performance plot to visualise and compare
+
+plt.plot(crashdate5, LPPL(crashdate5, fit_t_c, fit_A, fit_B, fit_C, fit_beta, fit_phi, fit_omega), label='LPPL fit')
+plt.grid()
+plt.ylabel('Index Score')
+plt.xlabel('Time (days)')
+plt.title('LPPL fit onto index Performance')
+plt.plot(crashdate5, crashclose5, label = 'Index Performance')
+plt.legend()
+plt.show()
