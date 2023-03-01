@@ -76,5 +76,5 @@ r2 = 1 - (ss_res/ss_tot)
 #print r-squared
 print(r2)
 
-#value of 0.8821430085817652
+#r-squared = 0.8821430085817652
 #closer to unity, the better.
