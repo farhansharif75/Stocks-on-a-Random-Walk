@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
 
-#define dates and index score in ~ 100 dyas leading up to the crash
+#define dates and index score in ~ 100 days leading up to the crash
 
 crashclose5df = close5[405:510]
 crashclose5 = crashclose5df.to_numpy() #convert pandas series to numpy array
