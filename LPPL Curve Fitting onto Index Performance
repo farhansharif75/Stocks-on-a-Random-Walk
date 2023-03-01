@@ -58,3 +58,23 @@ plt.title('LPPL fit onto index Performance')
 plt.plot(crashdate5, crashclose5, label = 'Index Performance')
 plt.legend()
 plt.show()
+
+
+#%%
+
+#quick r-squared test to check the goodness of fit
+
+#first calculate the residual sum of squares
+ss_res = np.sum((crashclose5-LPPL_fit)**2) 
+
+#next, the total sum of squares
+ss_tot = np.sum((crashclose5-np.mean(crashclose5))**2)
+
+#define r-squared
+r2 = 1 - (ss_res/ss_tot)
+
+#print r-squared
+print(r2)
+
+#value of 0.8821430085817652
+#closer to unity, the better.
