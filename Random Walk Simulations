@@ -12,7 +12,7 @@ import math
 
 #%%
 
-#Simulate a 1D random walk
+#Simulate a 1D random walk, with discrete steps
 
 def randomwalk1D(n):
     x, y = 0, 0
@@ -86,3 +86,75 @@ pylab.grid()
 pylab.xlabel('Pollen x-Position')
 pylab.ylabel('Pollen y-Position')
 pylab.show()
+
+#%%
+
+#Simulate a Geometric Brownian Motion
+
+def expbm(x, a, b, c):
+    return a*np.exp(b*x)+c
+
+xdata = np.linspace(0, 4, 50)
+y = expbm(xdata, 2.5, 0.8, 100)
+rng = np.random.default_rng()
+y_noise = 2 * rng.normal(size=xdata.size)
+ydata = y + y_noise
+plt.plot(xdata, ydata, label='data')
+plt.plot(xdata, expbm(xdata, 2.5,0.8,100), 'black', label="exponential drift", linestyle = "dotted")
+plt.xlabel('Time (days)')
+plt.ylabel('Stock Price (arbitrary currency)')
+plt.legend()
+plt.title('Simulated 1D Geometric Brownian Motion')
+plt.grid()
+
+#%%
+
+#2D random-walk uniformly distributed directions
+
+def random_walk(n):
+
+    # uniformly distributed angles
+    angle = uniform.rvs(size=(n,), loc=.0, scale=2.*np.pi)
+
+    # levy distributed step length
+    r = norm.rvs(size=n)
+
+    # x and y coordinates (position added to previous coordinate --> cum. sum)
+    x = np.cumsum(r*np.cos(angle))
+    y = np.cumsum(r*np.sin(angle))
+
+    return np.array( (x, y, r, angle) )
+
+# number of steps to simulate
+n = 1258
+
+# get levy walk (strictly speaking, it seems to be a flight)
+foo_random = random_walk(n)
+
+# initialize figure
+fig = plt.figure(figsize=(14,6))
+
+# plot 2D random walk with Levy stepsize
+ax1 = fig.add_subplot(1,2,1)
+ax1.plot(foo_random[0,:], foo_random[1,:])
+ax1.set_xlabel('x')
+ax1.grid()
+ax1.set_ylabel('y')
+ax1.set_title('2D Random Walk')
+
+
+plt.show()
+
+#%%
+
+#1D random-walk with continuous steps
+
+steps = np.random.choice([-1, 1], 1258)
+positions = np.cumsum(steps)
+
+plt.plot(positions)
+plt.grid()
+plt.ylabel('Position')
+plt.xlabel('Steps')
+plt.title('1D Random Walk, Continuous Steps')
+plt.show()
