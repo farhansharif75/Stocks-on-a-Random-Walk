@@ -1,0 +1,14 @@
+x1 = np.arange(-1,1, .02)
+x2 = np.arange(1,1.5,.02)
+x3 = np.arange(-1.5,-.87,0.2)
+plt.grid()
+plt.plot(x1, levy_stable.pdf(x, 1, 0), label= "Levy stable")
+plt.plot(x2, (1/55)*np.exp(-x2), color = "red")
+plt.plot(x3, (1/66)*np.exp(x3), color = "red", label= "exponential truncation")
+plt.vlines(x = [-.87,1], ymin = 0, ymax = 0.30,
+           colors = 'black',
+           label = 'truncation point', linestyle = "dotted")
+plt.xlabel('value of variable x')
+plt.ylabel('Probability density')
+plt.legend()
+plt.title('An arbitrary truncated α-stable distribution')
