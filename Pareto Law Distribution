@@ -1,0 +1,9 @@
+x4 = np.arange(0,1,0.02)
+x5 = np.arange(-1,0, 0.02)
+
+plt.plot(x4, (1/50)*(x4**(-1)), label = r"x $\geq$ 0")
+plt.plot(x5, x5*0, label = "x<0")
+plt.legend()
+plt.vlines(x = [0], ymin = 0, ymax = 1, colors = "black", label = r"x = 0", linestyle = "dotted")
+plt.title(r"The Pareto Law Probability Distribution, $\alpha_p = 0, A = 1$")
+plt.grid()
