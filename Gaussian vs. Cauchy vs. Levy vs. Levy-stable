@@ -1,0 +1,25 @@
+def gaussian(x, sigma):
+    return np.exp(-(x**2)/(2*sigma**2))/(sigma*np.sqrt(2*np.pi))
+
+def cauchy(x, gamma):
+    return 1/((np.pi/gamma)*(1+(x/gamma)**2))
+
+def levy_particular(x, c):
+    return np.sqrt(c/np.pi)*(np.exp(-c/(2*x)))/(x)**(3/2)
+
+x_axis = np.arange(-5, 5, 0.1)
+sigma = 1 
+gamma = 1
+c = 1
+plt.plot(x_axis, gaussian(x_axis, sigma), label = "Gaussian Distribution")
+plt.plot(x_axis, cauchy(x_axis, gamma), label = "Cauchy Distribution")
+plt.plot(x_axis-0.33, (2/3)*levy_particular(x_axis, c), label = "Levy Distribution", color = "green")
+plt.plot(x_axis, levy_stable.pdf(x+.58,1,0), label = "Levy-Stable Distribution", color = "red")
+plt.plot(np.arange(-5,0.1)-0.3, [0,0,0,0,0,0], color = "green")
+plt.grid()
+plt.xlabel('x')
+plt.ylabel('f(x)')
+plt.ylim(0,0.65)
+plt.legend()
+plt.title('Gaussian vs. Cauchy vs. Levy vs. Levy-Stable Distributions')
+plt.show()
