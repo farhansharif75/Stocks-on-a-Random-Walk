@@ -1,0 +1,15 @@
+def expbm(x, a, b, c):
+    return a*np.exp(b*x)+c
+
+xdata = np.linspace(0, 4, 50)
+y = expbm(xdata, 2.5, 0.8, 100)
+rng = np.random.default_rng()
+y_noise = 2 * rng.normal(size=xdata.size)
+ydata = y + y_noise
+plt.plot(xdata, ydata, label='data')
+plt.plot(xdata, expbm(xdata, 2.5,0.8,100), 'black', label="exponential drift", linestyle = "dotted")
+plt.xlabel('Time (days)')
+plt.ylabel('Stock Price (arbitrary currency)')
+plt.legend()
+plt.title('Simulated 1D Geometric Brownian Motion')
+plt.grid()
