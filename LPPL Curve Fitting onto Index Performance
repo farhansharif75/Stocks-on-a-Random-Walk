@@ -4,9 +4,9 @@ from scipy.optimize import curve_fit
 
 #define dates and index score in ~ 100 days leading up to the crash
 
-crashclose5df = close5[405:510]
+crashclose5df = close5[410:515]
 crashclose5 = crashclose5df.to_numpy() #convert pandas series to numpy array
-crashdate5 = np.arange(0,105,1)
+crashdate5 = np.arange(0,110,1)
 print(crashclose5[0:])
 print(crashdate5)
 
@@ -31,7 +31,7 @@ plt.grid()
 
 #find the best fit parameters, with constraints on the parameters found in the literature
 
-popt, pcov = curve_fit(LPPL, crashdate5, crashclose5, bounds=([106,3000,-np.inf,-0.5,0.15,0,4.8],[107,3700,1000,-.05,0.6,2*np.pi,10]))
+popt, pcov = curve_fit(LPPL, crashdate5[0:101], crashclose5[0:101], bounds=([101,3400,-np.inf,-0.01,0.15,0,4.8],[101.1,3500,100,100,0.6,2*np.pi,13]))
 print(popt)
 
 #assign the parameters found to new variables to be called inside the function when plotting
@@ -76,5 +76,5 @@ r2 = 1 - (ss_res/ss_tot)
 #print r-squared
 print(r2)
 
-#r-squared = 0.8821430085817652
+#r-squared = 0.950719380086982
 #closer to unity, the better.
