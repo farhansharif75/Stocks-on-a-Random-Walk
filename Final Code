@@ -1,0 +1,424 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import random
+import pylab
+import pandas as pd
+from scipy.optimize import curve_fit
+from scipy.stats import levy_stable
+import scipy.stats as stats
+from scipy.stats import norm
+from scipy.integrate import odeint
+#%%
+def randomwalk1D(n):
+    x, y = 0, 0
+    # Generate the time points [1, 2, 3, ... , n]
+    timepoints = np.arange(n + 1)
+    positions = [y]
+    directions = ["UP", "DOWN"]
+    for i in range(1, n + 1):
+        # Randomly select either UP or DOWN
+        step = random.choice(directions)
+        
+        # Move the object up or down
+        if step == "UP":
+            y += 1
+        elif step == "DOWN":
+            y -= 1
+        # Keep track of the positions
+        positions.append(y)
+    return timepoints, positions
+
+xgrd = np.linspace(0, 1258)
+time_data, pos_data = randomwalk1D(1258)
+plt.plot(time_data, pos_data, 'r-')
+plt.plot(xgrd, xgrd**[1/2], linestyle = 'dashed', color = 'black')
+plt.plot(xgrd, -xgrd**[1/2], linestyle = 'dashed', color = 'black')
+plt.title("1D Random Walk, Discrete Steps")
+plt.grid()
+plt.ylabel('Toss score')
+plt.xlabel('Toss number')
+#%%
+
+sp500_data5_rev = pd.read_csv('S&P500_last_5_years.csv')
+sp500_data5 = sp500_data5_rev.iloc[::-1]
+
+date5 = sp500_data5.loc[:,'Date']
+close5 = sp500_data5.loc[:, 'Close/Last']
+high5 = sp500_data5.loc[:, 'High']
+low5 = sp500_data5.loc[:, 'Low']
+
+plt.plot(date5, close5, color = 'red')
+plt.title('S&P500 Index: Performance over the last 5 year')
+plt.ylabel('Value of index')
+plt.xlabel('Date')
+plt.xticks([0, 210, 420, 630, 840, 1050, 1257], rotation = 25)
+plt.grid()
+plt.show()
+print(len(date5))
+
+#%%
+
+daily_change5 = high5-low5
+#print(daily_change)
+plt.plot(date5, np.log(daily_change5), color = 'blue')
+plt.title('S&P500 Index: Daily Change of Value over the last 5 years')
+plt.ylabel('Change in Value of index')
+plt.xlabel('Date')
+plt.xticks([0, 250, 500, 750, 1000, 1250])
+plt.grid()
+plt.show()
+
+#%%
+per_change5 = (daily_change5/close5)*100
+
+plt.hist(daily_change5, bins=100, color = 'blue')
+plt.xlabel('Close Values (Price)')
+plt.ylabel('Count')
+plt.grid()
+plt.title('Distribution of Daily Close Values (10 years)')
+plt.show()
+
+#%%
+daily_return5 = close5.diff()
+print(daily_return5)
+#%%
+plt.hist(daily_return5, bins = 70)
+plt.xlabel('Daily Returns')
+#plt.yscale('log')
+plt.ylabel('No. of Instances')
+plt.title('Daily Returns on the S&P500 Index, over the last 5 years')
+#plt.xlim(-200,200)
+plt.grid()
+plt.show()
+#%%
+
+
+mu = 1.1445186953062847
+sigma =  45.05930204897387
+
+x1 = np.linspace(-400,400,10000)
+plt.plot(x1, stats.norm.pdf(x1, mu, sigma), lw = 2, alpha = 0.6, label= "Gaussian fit", color = "black", linestyle = "dashed")
+
+plt.hist(daily_return5, bins = 70, density = True)
+plt.xlabel('Daily Returns')
+#plt.yscale('log')
+plt.ylabel('No. of Instances')
+plt.xlim(-250,250)
+#plt.ylim(0.00001,0.1)
+plt.title('Stable vs. Gaussian fit on returns distribution (semilog)')
+plt.grid()
+alpha, beta = 1.5400780479346055, -0.1691872508883072
+mean, var, skew, kurt = levy_stable.stats(alpha, beta, moments='mvsk')
+
+x = np.linspace(3*levy_stable.ppf(0.01, alpha, beta),
+                3*levy_stable.ppf(0.99, alpha, beta), 10000)
+xs = np.linspace(-400,400, 10000)
+plt.plot(xs*20, (1/20)*levy_stable.pdf(xs, alpha, beta), lw=3, alpha=1, label='α-stable fit', color = "red")
+plt.legend()
+plt.show()
+
+#%%
+#print(daily_return5.drop(daily_return5.row[-1]))
+print(daily_return5.dropna())
+#%%
+
+alpha1, beta1, loc1, scale1 = levy_stable.fit(daily_return5.dropna())
+print(alpha1, beta1, loc1, scale1)
+#%%
+mean, std = stats.norm.fit(daily_return5.dropna())
+print(mean, std)
+#%%
+alpha_fit = 1.5400780479346055 
+beta_fit = -0.1691872508883072 
+loc_fit = 0.6502095920438251 
+scale_fit = 22.632843550381708
+
+#%%
+
+from scipy.stats import levy
+from scipy.stats import uniform
+
+
+def levy_flight(n):
+
+    # uniformly distributed angles
+    angle = uniform.rvs(size=(n,), loc=.0, scale=2.*np.pi)
+
+    # levy distributed step length
+    r = levy.rvs(size=n)
+
+    # x and y coordinates (position added to previous coordinate --> cum. sum)
+    x = np.cumsum(r*np.cos(angle))
+    y = np.cumsum(r*np.sin(angle))
+
+    return np.array( (x, y, r, angle) )
+
+# number of steps to simulate
+n = 100
+
+# get levy walk (strictly speaking, it seems to be a flight)
+foo_levy = levy_flight(n)
+
+# initialize figure
+fig = plt.figure(figsize=(14,6))
+
+# plot 2D random walk with Levy stepsize
+ax1 = fig.add_subplot(1,2,1)
+ax1.plot(foo_levy[0,:], foo_levy[1,:])
+ax1.set_xlabel('x')
+ax1.grid()
+ax1.set_ylabel('y')
+ax1.set_title('2D Levy flight')
+
+
+plt.show()
+
+#%%
+
+def random_walk(n):
+
+    # uniformly distributed angles
+    angle = uniform.rvs(size=(n,), loc=.0, scale=2.*np.pi)
+
+    # levy distributed step length
+    r = norm.rvs(size=n)
+
+    # x and y coordinates (position added to previous coordinate --> cum. sum)
+    x = np.cumsum(r*np.cos(angle))
+    y = np.cumsum(r*np.sin(angle))
+
+    return np.array( (x, y, r, angle) )
+
+# number of steps to simulate
+n = 100
+#get levy walk (strictly speaking, it seems to be a flight)
+foo_random = random_walk(n)
+
+# initialize figure
+fig = plt.figure(figsize=(14,6))
+
+# plot 2D random walk with Levy stepsize
+ax1 = fig.add_subplot(1,2,1)
+ax1.plot(foo_random[0,:], foo_random[1,:])
+ax1.set_xlabel('x')
+ax1.grid()
+ax1.set_ylabel('y')
+ax1.set_title('2D Random Walk')
+
+
+plt.show()
+#%%
+
+print(close5[400:600])
+#%%
+dailychangecrashandafter = high5[410:529]-low5[410:529]
+print(dailychangecrashandafter)
+#%%
+plt.plot(date5[410:529],close5[410:529], 'blue', label = 'Index performance')
+plt.grid()
+plt.xticks([0,20,40,60,80,100,115], rotation = 25)
+plt.title('Index performance before and during crash')
+plt.errorbar(date5[410:529], close5[410:529], yerr = dailychangecrashandafter, color = 'green', label = 'Daily highs and lows', alpha = 0.6)
+plt.legend()
+plt.show()
+print(date5[410:529])
+#%%
+#print((max(close5[410:535])min(close5[410:535]))
+drop = max(close5[410:535])-min(close5[410:535])
+perdrop = drop/max(close5[410:535])*100
+print(perdrop)
+#%%
+crashclose5df = close5[405:515]
+crashclose5 = crashclose5df.to_numpy()
+crashdate5 = np.arange(0,110,1)
+print(crashclose5[0:])
+print(crashdate5)
+
+#%%
+
+def LPPL(t,t_c,A,B,C,beta,phi,omega): 
+    return A + B*(t_c - t)**(beta)*(1 + C*np.cos(omega*np.log(t_c-t) + phi))
+
+
+#%%
+
+plt.plot(crashdate5, crashclose5)
+plt.ylabel('Index Value')
+plt.xlabel('Time (days)')
+plt.title('Index Performance in ~ 100 days leading up to the crash')
+plt.grid()
+
+#%%
+
+popt, pcov = curve_fit(LPPL, crashdate5[0:101], crashclose5[0:101], bounds=([101,3400,-np.inf,-0.01,0.15,0,4.8],[101.1,3500,100,100,0.6,2*np.pi,13]))
+print(popt)
+fit_t_c = popt[0]
+fit_A = popt[1]
+fit_B = popt[2]
+fit_C = popt[3]
+fit_beta = popt[4]
+fit_phi = popt[5]
+fit_omega = popt[6]
+
+#%%
+
+daily_change5_crash = high5[405:515]-low5[405:515]
+
+
+#%%
+
+LPPL_fit = LPPL(crashdate5, fit_t_c, fit_A, fit_B, fit_C, fit_beta, fit_phi, fit_omega)
+
+plt.plot(crashdate5, LPPL_fit, color = "black",  label='LPPL fit', linewidth = 2, linestyle = "dashed")
+plt.grid()
+plt.ylabel('Index Value')
+plt.xlabel('Time (days)')
+plt.title('LPPL fit onto index performance')
+plt.plot(crashdate5, crashclose5, linewidth = 2, label = 'Index Performance', alpha = 0.8)
+plt.errorbar(crashdate5, crashclose5, yerr= daily_change5_crash, color = "green", label = "Daily highs and lows", alpha = 0.6)
+plt.legend()
+plt.show()
+
+#%%
+
+ss_res = np.sum((crashclose5[0:100]-LPPL_fit[0:100])**2)
+ss_tot = np.sum((crashclose5[0:100]-np.mean(crashclose5[0:100]))**2)
+r2 = 1 - (ss_res/ss_tot)
+print(r2)
+#%%
+
+def BSexpgrowthterm(V, t):
+    dVdt = k*V
+    return dVdt
+
+k = 1
+t = np.linspace(0,5)
+V = odeint(BSexpgrowthterm, k, t)
+plt.grid()
+plt.xlabel('Time (arbitrary units)')
+plt.ylabel('V(t)')
+plt.plot(t, V)
+plt.title('Exponential growth contribution due to the $\\frac{dV}{dt}=rV(t)$ term')
+#%%
+
+steps = np.random.choice([-1, 1], 1258)
+positions = np.cumsum(steps)
+xgrid = np.linspace(0,1258)
+
+plt.plot(positions)
+plt.plot(xgrid, xgrid**[1/2], linestyle = 'dashed', color = 'black')
+plt.plot(xgrid, -xgrid**[1/2], linestyle = 'dashed', color = 'black')
+plt.grid()
+plt.ylabel('Toss Score')
+plt.xlabel('Toss Number')
+plt.title('1D Random Walk, Continuous Steps')
+plt.show()
+#%%
+
+def gaussian(x, sigma):
+    return np.exp(-(x**2)/(2*sigma**2))/(sigma*np.sqrt(2*np.pi))
+
+def cauchy(x, gamma):
+    return 1/((np.pi/gamma)*(1+(x/gamma)**2))
+
+def levy_particular(x, c):
+    return np.sqrt(c/np.pi)*(np.exp(-c/(2*x)))/(x)**(3/2)
+
+x_axis = np.arange(-5, 5, 0.001)
+sigma = 1 
+gamma = 1
+c = 1
+plt.plot(x_axis, gaussian(x_axis, sigma), label = "Gaussian")
+plt.plot(x_axis, cauchy(x_axis, gamma), label = "Cauchy-Lorentz")
+plt.plot(x_axis-0.33, (2/3)*levy_particular(x_axis, c), label = "Levy", color = "green")
+plt.plot(x_axis*3, 1.2*levy_stable.pdf(x+2,1.2,0), label = "Stable", color = "red")
+plt.plot(np.arange(-5,0.1)-0.3, [0,0,0,0,0,0], color = "green")
+plt.grid()
+plt.xlabel('x')
+plt.ylabel('f(x)')
+plt.ylim(0.01,0.5)
+plt.xlim(-5,4.8)
+plt.yscale('log')
+plt.legend()
+plt.title('Comparison of Distributions (semilog)')
+plt.show()
+#%%
+
+def expbm(x, a, b, c):
+    return a*np.exp(b*x)+c
+
+xdata = np.linspace(0, 4, 100)
+y = expbm(xdata, 2.5, 0.8, 100)
+rng = np.random.default_rng()
+y_noise = 8 * rng.normal(size=xdata.size)
+ydata = y + y_noise
+plt.plot(xdata, ydata, label='path of price')
+plt.plot(xdata, expbm(xdata, 2.5,0.8,100), 'black', label="exponential drift", linestyle = "dashed", alpha = 0.7)
+plt.plot(xdata, expbm(xdata, 2.5,0.8,100)+8, 'green', label='1$\sigma$ from mean', linestyle = 'dotted')
+plt.plot(xdata, expbm(xdata, 2.5,0.8,100)-8, 'green', linestyle = 'dotted')
+plt.plot(xdata, expbm(xdata, 2.5,0.8,100)+16, 'orange', label='2$\sigma$ from mean', linestyle = 'dotted')
+plt.plot(xdata, expbm(xdata, 2.5,0.8,100)-16, 'orange', linestyle = 'dotted')
+plt.plot(xdata, expbm(xdata, 2.5,0.8,100)+24, 'red', label='3$\sigma$ from mean', linestyle = 'dotted')
+plt.plot(xdata, expbm(xdata, 2.5,0.8,100)-24, 'red', linestyle = 'dotted')
+plt.xlabel('Time (arbitrary units)')
+plt.ylabel('Stock Price (arbitrary currency)')
+plt.legend()
+plt.title('Simulated 1D Geometric Brownian Motion')
+plt.grid()
+#%%
+
+expbmfit = curve_fit(expbm, date5, close5)
+print(expbmfit)
+
+
+#%%
+x1 = np.arange(-2,2, .0004)
+x2 = np.arange(1,2,.0002)
+x3 = np.arange(-2,-.87,0.0002)
+plt.grid()
+plt.plot(x1, levy_stable.pdf(x, 1, 0), label= "Levy stable")
+plt.plot(x2, (1/90)*np.exp(-x2**2), color = "red")
+plt.plot(x3, (1/190)*np.exp(-x3**2), color = "red", label= "exponential truncation")
+plt.vlines(x = [-.87,1], ymin = 0, ymax = 0.30,
+           colors = 'black',
+           label = 'truncation point', linestyle = "dotted")
+#plt.yscale('log')
+plt.xlabel('value of variable x')
+plt.ylabel('Probability density')
+plt.legend()
+plt.title('An arbitrary truncated α-stable distribution')
+
+#%%
+
+x4 = np.arange(0,1,0.02)
+x5 = np.arange(-1,0, 0.02)
+
+plt.plot(x4, (1/50)*(x4**(-1)), label = r"x $\geq$ 0")
+plt.plot(x5, x5*0, label = "x<0")
+plt.legend()
+plt.vlines(x = [0], ymin = 0, ymax = 1, colors = "black", label = r"x = 0", linestyle = "dotted")
+plt.title(r"The Pareto Law Probability Distribution, $\alpha_p = 0, A = 1$")
+plt.grid()
+#%%
+
+sp500_data10_rev = pd.read_csv('S&P10Years.csv')
+sp500_data10 = sp500_data10_rev.iloc[::-1]
+
+date10 = sp500_data10.loc[:,'Date']
+close10 = sp500_data10.loc[:, 'Close/Last']
+high10 = sp500_data10.loc[:, 'High']
+low10 = sp500_data10.loc[:, 'Low']
+
+daily_return10 = close10.diff()
+print(daily_return10)
+
+#%%
+
+mean10, std10 = stats.norm.fit(daily_return10.dropna())
+print(mean10, std10)
+
+#%%
+
+plt.hist(daily_return10, bins = 70, density = True)
+x1_10 = np.linspace(-400,400,10000)
+plt.plot(x1_10, stats.norm.pdf(x1_10, mean10, std10), lw = 2, alpha = 0.6, label= "Gaussian fit", color = "black", linestyle = "dashed")
